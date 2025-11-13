@@ -1,0 +1,35 @@
+name: Build Exynos AAA Optimized Driver
+
+on:
+  push:
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up NDK
+      uses: android-actions/setup-android@v2
+      
+    - name: Build driver
+      run: |
+        $ANDROID_NDK_HOME/ndk-build NDK_PROJECT_PATH=. APP_BUILD_SCRIPT=./Android.mk
+        mkdir -p release/libs/arm64-v8a
+        cp obj/local/arm64-v8a/*.so release/libs/arm64-v8a/
+        
+    - name: Create release package
+      run: |
+        zip -r exynos_aaa_v3.0.zip release/ README.md
+        mkdir -p dist
+        mv exynos_aaa_v3.0.zip dist/
+        
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: exynos-aaa-driver
+        path: dist/
